@@ -2,9 +2,10 @@ import type { Task } from "../../data/tasks"
 
 type TaskCardProps = {
     task: Task
+    moveTask: (taskId: Task['id']) => void;
 }
 
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task, moveTask }: TaskCardProps) {
 
 
     return (
@@ -14,6 +15,12 @@ export default function TaskCard({ task }: TaskCardProps) {
                 <p>{task.description}</p>
                 <small>{task.priority}</small>
             </div>
+            {task.status === 'done'
+                ? (<div></div>)
+                : <div>
+                    <button onClick={() => moveTask(task.id)}>Move to next</button>
+                </div>}
+
         </>
     )
 }

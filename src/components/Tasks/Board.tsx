@@ -6,7 +6,31 @@ import Column from "./Column"
 
 export default function Board() {
 
-    const [tasks] = useState<Task[]>(initialTasks)
+    const [tasks, setTasks] = useState<Task[]>(initialTasks)
+
+    function getNextStatus(status: Task['status']): Task['status'] {
+        if (status === 'todo') {
+            return 'in-progress'
+        }
+
+        return 'done';
+    }
+
+    function moveTask(taskId: Task['id']) {
+
+        setTasks(currentTasks =>
+            currentTasks.map(task => {
+
+                if (task.id !== taskId) {
+                    return task;
+                }
+
+                const status = getNextStatus(task.status);
+
+                return { ...task, status }
+            })
+        )
+    }
 
     const todoTasks = tasks.filter(task =>
         task.status === 'todo'
@@ -20,9 +44,9 @@ export default function Board() {
 
     return (
         <>
-            <Column title='Todo' tasks={todoTasks} />
-            <Column title='In progress' tasks={inProgressTasks} />
-            <Column title='Done' tasks={doneTasks} />
+            <Column title='Todo' tasks={todoTasks} moveTask={moveTask} />
+            <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} />
+            <Column title='Done' tasks={doneTasks} moveTask={moveTask} />
         </>
     )
 }
