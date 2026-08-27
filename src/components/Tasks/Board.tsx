@@ -9,6 +9,7 @@ import EditForm, { type EditTaskSchemaType } from "./EditForm";
 export default function Board() {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [priorityFilter, setPriorityFilter] = useState<'high' | 'medium' | 'low' | 'all'>('all')
 
     const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
 
@@ -60,19 +61,40 @@ export default function Board() {
         })
     }
 
-    const todoTasks = tasks.filter(task =>
+    function priorityFilterConversion(filterValue: 'high' | 'medium' | 'low' | 'all'): number[] {
+        if (filterValue === 'high') {
+            return [7, 8, 9, 10]
+        } else if (filterValue === 'medium') {
+            return [4, 5, 6]
+        } else if (filterValue === 'low') {
+            return [1, 2, 3]
+        } else return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    }
+
+    const filteredTasks = tasks.filter(task =>
+        priorityFilterConversion(priorityFilter).includes(task.priority)
+    );
+
+    console.log(filteredTasks)
+    const todoTasks = filteredTasks.filter(task =>
         task.status === 'todo'
     )
-    const inProgressTasks = tasks.filter(task =>
+    const inProgressTasks = filteredTasks.filter(task =>
         task.status === 'in-progress'
     )
-    const doneTasks = tasks.filter(task =>
+    const doneTasks = filteredTasks.filter(task =>
         task.status === 'done'
     )
 
 
     return (
         <>
+            <select name="filterOptions" id="filter-options" value={priorityFilter} onChange={(event) => setPriorityFilter(event?.target.value as typeof priorityFilter)}>
+                <option value="all">All</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
             <div className="grid grid-cols-3 gap-2">
                 <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
                 <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
