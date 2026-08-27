@@ -10,9 +10,11 @@ export default function Board() {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
+    const [search, setSearch] = useState<string>('')
 
     const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
 
+    /* TASK ACTIONS */
     function moveTask(taskId: Task['id']) {
 
         setTasks(currentTasks =>
@@ -61,7 +63,9 @@ export default function Board() {
         })
     }
 
-    function priorityFilterConversion(filterValue: 'high' | 'medium' | 'low' | 'all'): number[] {
+    /* EVERYTHING USED FOR FILTERING AND SEARCHING */
+    //TODO OVO GOVNO OVDE MORAS DA PROMENIS IZ KORENA DA NE KORISTI BROJEVE ALI NE ZURI LAGANO
+    function priorityFilterConversion(filterValue: PriorityFilter): number[] {
         if (filterValue === 'high') {
             return [7, 8, 9, 10]
         } else if (filterValue === 'medium') {
@@ -77,32 +81,37 @@ export default function Board() {
         allowedPriorities.includes(task.priority)
     );
 
-    console.log(filteredTasks)
-    const todoTasks = filteredTasks.filter(task =>
+    const searchedTasks = filteredTasks.filter(task => task.title.toLowerCase().includes(search.toLowerCase()))
+
+    const todoTasks = searchedTasks.filter(task =>
         task.status === 'todo'
     )
-    const inProgressTasks = filteredTasks.filter(task =>
+    const inProgressTasks = searchedTasks.filter(task =>
         task.status === 'in-progress'
     )
-    const doneTasks = filteredTasks.filter(task =>
+    const doneTasks = searchedTasks.filter(task =>
         task.status === 'done'
     )
 
-
     return (
         <>
-            <select name="filterOptions" id="filter-options" value={priorityFilter} onChange={(event) => setPriorityFilter(event?.target.value as typeof priorityFilter)}>
-                <option value="all">All</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-            </select>
+            <div className="flex flex-col w-62.5 mx-auto">
+                <h2>FILTER & SEARCH</h2>
+                <select className="w-full" name="filterOptions" id="filter-options" value={priorityFilter} onChange={(event) => setPriorityFilter(event?.target.value as typeof priorityFilter)}>
+                    <option value="all">All</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <input className="w-full text-center border" placeholder="Search" type="text" value={search} onChange={(event) => setSearch(event.target.value)} />
+            </div>
             <div className="grid grid-cols-3 gap-2">
                 <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
                 <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
                 <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
             </div>
             <div>
+                <h2>ADD NEW TASK</h2>
                 <InputForm onAddTask={addTask} />
             </div>
             {selectedTask && <EditForm task={selectedTask} onSubmitEdit={editTask} onClose={() => setSelectedTask(null)} />}
