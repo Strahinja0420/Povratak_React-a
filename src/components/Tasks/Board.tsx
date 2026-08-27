@@ -4,12 +4,12 @@ import Column from "./Column"
 import InputForm, { type AddNewTaskSchemaType } from "./InputForm"
 import EditForm, { type EditTaskSchemaType } from "./EditForm";
 
-
+type PriorityFilter = 'high' | 'medium' | 'low' | 'all'
 
 export default function Board() {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const [priorityFilter, setPriorityFilter] = useState<'high' | 'medium' | 'low' | 'all'>('all')
+    const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
 
     const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
 
@@ -71,8 +71,10 @@ export default function Board() {
         } else return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     }
 
+    const allowedPriorities = priorityFilterConversion(priorityFilter)
+
     const filteredTasks = tasks.filter(task =>
-        priorityFilterConversion(priorityFilter).includes(task.priority)
+        allowedPriorities.includes(task.priority)
     );
 
     console.log(filteredTasks)
