@@ -1,12 +1,13 @@
-import type { Task } from "../../data/tasks"
+import { type Task } from "../../data/tasks"
 
 type TaskCardProps = {
     task: Task;
     moveTask: (taskId: Task['id']) => void;
-    onEdit: (task : Task) => void;
+    onEdit: (task: Task) => void;
+    onDeleteTask: (taskId: Task['id']) => void;
 }
 
-export default function TaskCard({ task, moveTask, onEdit }: TaskCardProps) {
+export default function TaskCard({ task, moveTask, onEdit, onDeleteTask }: TaskCardProps) {
 
     return (
         <>
@@ -25,6 +26,8 @@ export default function TaskCard({ task, moveTask, onEdit }: TaskCardProps) {
                 }
                 <br />
                 <button className="mt-2 text-black bg-white cursor-pointer" onClick={() => onEdit(task)}>Edit</button>
+                <br />
+                <button className="mt-2 text-black bg-white cursor-pointer" onClick={() => onDeleteTask(task.id)}>Delete</button>
 
             </div>
 

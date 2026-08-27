@@ -52,6 +52,14 @@ export default function Board() {
         setSelectedTask(null);
     }
 
+    function deleteTask(taskId: Task['id']) {
+        setTasks(currentTasks => {
+            const filteredTasks = currentTasks.filter(task => task.id !== taskId)
+
+            return [...filteredTasks]
+        })
+    }
+
     const todoTasks = tasks.filter(task =>
         task.status === 'todo'
     )
@@ -66,9 +74,9 @@ export default function Board() {
     return (
         <>
             <div className="grid grid-cols-3 gap-2">
-                <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} />
-                <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} />
-                <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} />
+                <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
             </div>
             <div>
                 <InputForm onAddTask={addTask} />
