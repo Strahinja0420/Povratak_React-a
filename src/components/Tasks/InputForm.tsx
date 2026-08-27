@@ -48,23 +48,29 @@ export default function InputForm({ onAddTask }: InputFormProps) {
 
     return (
         <>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <label >
-                    Title:
-                    <input {...register('title')} placeholder="Title" />
+            <form className="flex flex-col h-auto gap-3 py-10 mx-auto border w-md" onSubmit={handleSubmit(onSubmit)}>
+                <label className='flex items-center w-full ml-2 text-left'>
+                    <span className='w-28'>Title:</span>
+                    <div className='flex flex-col items-start gap-1'>
+                        <input className='border' {...register('title')} placeholder="Title" />
+                        {errors.title && <p className='text-red-500'>{errors.title.message}</p>}
+                    </div>
                 </label>
-                <p>{errors.title?.message}</p>
-                <label>
-                    Description:
-                    <input {...register('description')} placeholder="Description" />
+                <label className='flex items-center w-full ml-2 text-left'>
+                    <span className='w-28'>Description:</span>
+                    <div className='flex flex-col items-start gap-1'>
+                        <textarea className='border resize-none' {...register('description')} placeholder="Description" />
+                        {errors.description && <p className='text-red-500'>{errors.description.message}</p>}
+                    </div>
                 </label>
-                <p>{errors.description?.message}</p>
-                <label>
-                    Priority:
-                    <input type="number" {...register('priority', { valueAsNumber: true })} placeholder="1-10" />
+                <label className='flex items-center w-full ml-2 text-left'>
+                    <span className='w-28'>Priority:</span>
+                    <div className='flex flex-col items-start gap-1'>
+                        <input type="number" className='border' {...register('priority', { valueAsNumber: true })} placeholder="1-10" />
+                        {errors.priority && <p className='text-red-500'>{errors.priority.message}</p>}
+                    </div>
                 </label>
-                <p>{errors.priority?.message}</p>
-                <button className="h-10 text-center border border-white cursor-pointer w-50" type="submit"  >
+                <button className="self-center h-10 text-center border border-white cursor-pointer w-50" type="submit"  >
                     Submit
                 </button>
             </form>

@@ -2,18 +2,15 @@ import { useState } from "react"
 import { tasks as initialTasks, type Task } from "../../data/tasks"
 import Column from "./Column"
 import InputForm, { type AddNewTaskSchemaType } from "./InputForm"
+import EditForm, { type EditTaskSchemaType } from "./EditForm";
+
 
 
 export default function Board() {
-    const [tasks, setTasks] = useState<Task[]>(initialTasks)
+    const [tasks, setTasks] = useState<Task[]>(initialTasks);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-    function getNextStatus(status: Task['status']): Task['status'] {
-        if (status === 'todo') {
-            return 'in-progress'
-        }
-
-        return 'done';
-    }
+    const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
 
     function moveTask(taskId: Task['id']) {
 
@@ -32,8 +29,7 @@ export default function Board() {
     }
 
     function addTask(data: AddNewTaskSchemaType) {
-        console.log(data)
-        const newTask : Task = {
+        const newTask: Task = {
             id: crypto.randomUUID(),
             status: 'todo',
             ...data
@@ -43,6 +39,17 @@ export default function Board() {
             ...currentTasks,
             newTask
         ])
+    }
+
+    function editTask(data: EditTaskSchemaType) {
+        if (!selectedTask) {
+            return;
+        }
+
+        setTasks(currentTasks => currentTasks.map(task =>
+            task.id === selectedTask.id ? { ...task, ...data } : task
+        ));
+        setSelectedTask(null);
     }
 
     const todoTasks = tasks.filter(task =>
@@ -59,13 +66,14 @@ export default function Board() {
     return (
         <>
             <div className="grid grid-cols-3 gap-2">
-                <Column title='Todo' tasks={todoTasks} moveTask={moveTask} />
-                <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} />
-                <Column title='Done' tasks={doneTasks} moveTask={moveTask} />
+                <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} />
+                <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} />
+                <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} />
             </div>
             <div>
                 <InputForm onAddTask={addTask} />
             </div>
+            {selectedTask && <EditForm task={selectedTask} onSubmitEdit={editTask} onClose={() => setSelectedTask(null)} />}
         </>
     )
 }
