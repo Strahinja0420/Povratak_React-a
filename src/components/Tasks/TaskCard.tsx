@@ -1,3 +1,4 @@
+import type React from "react";
 import { type Task } from "../../data/tasks"
 
 type TaskCardProps = {
@@ -9,9 +10,17 @@ type TaskCardProps = {
 
 export default function TaskCard({ task, moveTask, onEdit, onDeleteTask }: TaskCardProps) {
 
+    const handleDragStart = (event: React.DragEvent<HTMLDivElement>, taskId: Task['id']) => {
+        event.dataTransfer.setData("text/plain", taskId.toString())
+    }
+
+    const handleDragEnd = (event: React.DragEvent<HTMLDivElement>) => {
+        event.dataTransfer.clearData();
+    }
+
     return (
         <>
-            <div className="max-w-sm mx-auto my-3 border border-white">
+            <div draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} className="max-w-sm mx-auto my-3 border border-white">
                 <h2>{task.title}</h2>
                 <p>{task.description}</p>
                 <small>{task.priority}</small>

@@ -1,18 +1,46 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { tasks as initialTasks, type Task } from "../../data/tasks"
 import Column from "./Column"
 import InputForm, { type AddNewTaskSchemaType } from "./InputForm"
 import EditForm, { type EditTaskSchemaType } from "./EditForm";
+import * as z from 'zod';
 
 type PriorityFilter = 'high' | 'medium' | 'low' | 'all'
 
+//TODO NAPRAVI DA ZOD KONTROLISE TIP SEME POSLE NEMOJ DA SE BIJU TYPESCRIPT I ZOD KO UPRAVLJA TIME
+const TaskSchema = z.object({
+    id: z.union([z.number(), z.string()]),
+    title: z.string(),
+    description: z.string(),
+    priority: z.number(),
+    status: z.enum(['todo', 'in-progress', 'done'])
+});
+
 export default function Board() {
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
+    const [tasks, setTasks] = useState<Task[]>(() => {
+        const tasksInStorage = localStorage.getItem('tasks');
+
+        if (!tasksInStorage) {
+            return initialTasks;
+        }
+
+        const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
+
+        if (parsedTasks.success) {
+            return parsedTasks.data;
+        }
+
+        return initialTasks;
+    });
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
     const [search, setSearch] = useState<string>('')
 
     const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
+
+    useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tasks))
+    }, [tasks])
 
     /* TASK ACTIONS */
     function moveTask(taskId: Task['id']) {
@@ -77,21 +105,38 @@ export default function Board() {
 
     const allowedPriorities = priorityFilterConversion(priorityFilter)
 
-    const filteredTasks = tasks.filter(task =>
-        allowedPriorities.includes(task.priority)
-    );
+    const visibleTasks = tasks
+        .filter(tasks => allowedPriorities.includes(tasks.priority))
+        .filter(tasks => tasks.title.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) => b.priority - a.priority)
 
-    const searchedTasks = filteredTasks.filter(task => task.title.toLowerCase().includes(search.toLowerCase()))
-
-    const todoTasks = searchedTasks.filter(task =>
+    const todoTasks = visibleTasks.filter(task =>
         task.status === 'todo'
     )
-    const inProgressTasks = searchedTasks.filter(task =>
+    const inProgressTasks = visibleTasks.filter(task =>
         task.status === 'in-progress'
     )
-    const doneTasks = searchedTasks.filter(task =>
+    const doneTasks = visibleTasks.filter(task =>
         task.status === 'done'
     )
+
+    /* DROP LOGIC FOR DRAG AND DROP */
+    const handleOnDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+    }
+
+    const handleOnDrop = (event: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
+        event.preventDefault();
+        const taskId = event.dataTransfer.getData("text/plain");
+        setTasks((prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id.toString() === taskId) {
+                    return { ...task, status }
+                }
+                return task;
+            })
+        }))
+    }
 
     return (
         <>
@@ -106,9 +151,15 @@ export default function Board() {
                 <input className="w-full text-center border" placeholder="Search" type="text" value={search} onChange={(event) => setSearch(event.target.value)} />
             </div>
             <div className="grid grid-cols-3 gap-2">
-                <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
-                <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
-                <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'todo')}>
+                    <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                </div>
+                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'in-progress')}>
+                    <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                </div>
+                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'done')}>
+                    <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                </div>
             </div>
             <div>
                 <h2>ADD NEW TASK</h2>

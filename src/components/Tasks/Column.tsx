@@ -11,10 +11,11 @@ type ColumnProps = {
     onDeleteTask: (taskId: Task['id']) => void;
 }
 
+
 export default function Column({ tasks, title, moveTask, onEdit, onDeleteTask }: ColumnProps) {
     return (
         <>
-            <div>
+            <div >
                 <h1>{title}</h1>
                 {tasks.length === 0 && <p>No tasks</p>}
                 {tasks.map(task => (
