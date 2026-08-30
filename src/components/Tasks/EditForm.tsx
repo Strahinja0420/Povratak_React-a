@@ -27,7 +27,6 @@ export default function EditForm({ onClose, onSubmitEdit, task }: EditFormProps)
 
     const {
         register,
-        reset,
         handleSubmit,
         formState: { errors }
     } = useForm<EditTaskSchemaType>({
@@ -42,7 +41,6 @@ export default function EditForm({ onClose, onSubmitEdit, task }: EditFormProps)
 
     const onSubmit: SubmitHandler<EditTaskSchemaType> = (data) => {
         onSubmitEdit(data)
-        reset(task);
     }
 
     return (

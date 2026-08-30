@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 import { tasks as initialTasks, type Task } from "../../data/tasks"
 import Column from "./Column"
 import InputForm, { type AddNewTaskSchemaType } from "./InputForm"
@@ -6,6 +6,13 @@ import EditForm, { type EditTaskSchemaType } from "./EditForm";
 import * as z from 'zod';
 
 type PriorityFilter = 'high' | 'medium' | 'low' | 'all'
+
+type Action =
+    | { type: 'EDIT_TASK'; taskId: Task['id']; data: EditTaskSchemaType }
+    | { type: 'ADD_TASK'; task: Task }
+    | { type: 'REMOVE_TASK'; taskId: Task['id'] }
+    | { type: 'MOVE_TASK'; taskId: Task['id'] }
+    | { type: 'MOVE_TO_STATUS'; taskId: Task['id']; status: Task['status'] };
 
 //TODO NAPRAVI DA ZOD KONTROLISE TIP SEME POSLE NEMOJ DA SE BIJU TYPESCRIPT I ZOD KO UPRAVLJA TIME
 const TaskSchema = z.object({
@@ -16,27 +23,63 @@ const TaskSchema = z.object({
     status: z.enum(['todo', 'in-progress', 'done'])
 });
 
-export default function Board() {
-    const [tasks, setTasks] = useState<Task[]>(() => {
-        const tasksInStorage = localStorage.getItem('tasks');
+function loadInitialTasks() {
+    const tasksInStorage = localStorage.getItem('tasks');
 
-        if (!tasksInStorage) {
-            return initialTasks;
-        }
-
-        const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
-
-        if (parsedTasks.success) {
-            return parsedTasks.data;
-        }
-
+    if (!tasksInStorage) {
         return initialTasks;
-    });
+    }
+
+    const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
+
+    if (parsedTasks.success) {
+        return parsedTasks.data;
+    }
+
+    return initialTasks;
+}
+
+function tasksReducer(tasks: Task[], action: Action): Task[] {
+    switch (action.type) {
+        case 'MOVE_TASK': {
+            return tasks.map(task =>
+                task.id === action.taskId
+                    ? { ...task, status: task.status === 'todo' ? 'in-progress' : 'done' }
+                    : task
+            )
+        }
+        case 'ADD_TASK': {
+            return [...tasks, action.task]
+        }
+        case 'REMOVE_TASK': {
+            return tasks.filter(task => task.id !== action.taskId)
+        }
+        case 'EDIT_TASK': {
+            return tasks.map(task =>
+                task.id === action.taskId
+                    ? { ...task, ...action.data }
+                    : task
+            )
+        }
+        case 'MOVE_TO_STATUS': {
+            return tasks.map(task =>
+                task.id === action.taskId
+                    ? { ...task, status: action.status }
+                    : task
+            )
+        }
+
+
+        default:
+            throw Error('Unknown action' + action)
+    }
+}
+
+export default function Board() {
+    const [tasks, dispatch] = useReducer(tasksReducer, undefined, loadInitialTasks)
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
     const [search, setSearch] = useState<string>('')
-
-    const getNextStatus = (status: Task['status']) => status === 'todo' ? 'in-progress' : 'done';
 
     useEffect(() => {
         localStorage.setItem('tasks', JSON.stringify(tasks))
@@ -44,19 +87,7 @@ export default function Board() {
 
     /* TASK ACTIONS */
     function moveTask(taskId: Task['id']) {
-
-        setTasks(currentTasks =>
-            currentTasks.map(task => {
-
-                if (task.id !== taskId) {
-                    return task;
-                }
-
-                const status = getNextStatus(task.status);
-
-                return { ...task, status }
-            })
-        )
+        dispatch({ type: 'MOVE_TASK', taskId })
     }
 
     function addTask(data: AddNewTaskSchemaType) {
@@ -66,10 +97,7 @@ export default function Board() {
             ...data
         }
 
-        setTasks(currentTasks => [
-            ...currentTasks,
-            newTask
-        ])
+        dispatch({ type: 'ADD_TASK', task: newTask })
     }
 
     function editTask(data: EditTaskSchemaType) {
@@ -77,18 +105,13 @@ export default function Board() {
             return;
         }
 
-        setTasks(currentTasks => currentTasks.map(task =>
-            task.id === selectedTask.id ? { ...task, ...data } : task
-        ));
+        dispatch({ type: 'EDIT_TASK', taskId: selectedTask.id,data })
+
         setSelectedTask(null);
     }
 
     function deleteTask(taskId: Task['id']) {
-        setTasks(currentTasks => {
-            const filteredTasks = currentTasks.filter(task => task.id !== taskId)
-
-            return [...filteredTasks]
-        })
+        dispatch({ type: 'REMOVE_TASK', taskId })
     }
 
     /* EVERYTHING USED FOR FILTERING AND SEARCHING */
@@ -120,46 +143,33 @@ export default function Board() {
         task.status === 'done'
     )
 
-    /* DROP LOGIC FOR DRAG AND DROP */
-    const handleOnDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-    }
-
-    const handleOnDrop = (event: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
-        event.preventDefault();
-        const taskId = event.dataTransfer.getData("text/plain");
-        setTasks((prevTasks => {
-            return prevTasks.map((task) => {
-                if (task.id.toString() === taskId) {
-                    return { ...task, status }
-                }
-                return task;
-            })
-        }))
+    function moveTaskToStatus(
+        taskId: Task['id'],
+        status: Task['status']
+    ) {
+        dispatch({ type: 'MOVE_TO_STATUS', taskId, status })
     }
 
     return (
         <>
             <div className="flex flex-col w-62.5 mx-auto">
                 <h2>FILTER & SEARCH</h2>
+
                 <select className="w-full" name="filterOptions" id="filter-options" value={priorityFilter} onChange={(event) => setPriorityFilter(event?.target.value as typeof priorityFilter)}>
                     <option value="all">All</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
                     <option value="low">Low</option>
                 </select>
+
                 <input className="w-full text-center border" placeholder="Search" type="text" value={search} onChange={(event) => setSearch(event.target.value)} />
             </div>
             <div className="grid grid-cols-3 gap-2">
-                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'todo')}>
-                    <Column title='Todo' tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
-                </div>
-                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'in-progress')}>
-                    <Column title='In progress' tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
-                </div>
-                <div onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e,'done')}>
-                    <Column title='Done' tasks={doneTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
-                </div>
+
+                <Column onDropTask={moveTaskToStatus} title='Todo' status={'todo'} tasks={todoTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                <Column onDropTask={moveTaskToStatus} title='In progress' status={'in-progress'} tasks={inProgressTasks} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+                <Column onDropTask={moveTaskToStatus} title='Done' tasks={doneTasks} status={'done'} moveTask={moveTask} onEdit={setSelectedTask} onDeleteTask={deleteTask} />
+
             </div>
             <div>
                 <h2>ADD NEW TASK</h2>
