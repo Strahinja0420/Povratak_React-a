@@ -1,7 +1,7 @@
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
-import type { Task } from '../../data/tasks';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { Task } from '../../data/tasks';
 
 const EditTaskSchema = z.object({
     title: z.string()

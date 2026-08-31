@@ -1,9 +1,8 @@
 import { useEffect, useReducer, useState } from "react"
-import { tasks as initialTasks, type Task } from "../../data/tasks"
+import { tasks as initialTasks, TaskSchema, type Task } from "../../data/tasks"
 import Column from "./Column"
 import InputForm, { type AddNewTaskSchemaType } from "./InputForm"
 import EditForm, { type EditTaskSchemaType } from "./EditForm";
-import * as z from 'zod';
 
 type PriorityFilter = 'high' | 'medium' | 'low' | 'all'
 
@@ -14,30 +13,6 @@ type Action =
     | { type: 'MOVE_TASK'; taskId: Task['id'] }
     | { type: 'MOVE_TO_STATUS'; taskId: Task['id']; status: Task['status'] };
 
-//TODO NAPRAVI DA ZOD KONTROLISE TIP SEME POSLE NEMOJ DA SE BIJU TYPESCRIPT I ZOD KO UPRAVLJA TIME
-const TaskSchema = z.object({
-    id: z.union([z.number(), z.string()]),
-    title: z.string(),
-    description: z.string(),
-    priority: z.number(),
-    status: z.enum(['todo', 'in-progress', 'done'])
-});
-
-function loadInitialTasks() {
-    const tasksInStorage = localStorage.getItem('tasks');
-
-    if (!tasksInStorage) {
-        return initialTasks;
-    }
-
-    const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
-
-    if (parsedTasks.success) {
-        return parsedTasks.data;
-    }
-
-    return initialTasks;
-}
 
 function tasksReducer(tasks: Task[], action: Action): Task[] {
     switch (action.type) {
@@ -69,13 +44,32 @@ function tasksReducer(tasks: Task[], action: Action): Task[] {
             )
         }
 
-
         default:
             throw Error('Unknown action' + action)
     }
 }
 
-export default function Board() {
+function loadInitialTasks() {
+    const tasksInStorage = localStorage.getItem('tasks');
+
+    if (!tasksInStorage) {
+        return initialTasks;
+    }
+
+    const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
+
+    if (parsedTasks.success) {
+        return parsedTasks.data
+    }
+
+    return initialTasks;
+}
+
+type BoardProps = {
+    projectId: string;
+}
+
+export default function Board({ projectId }: BoardProps) {
     const [tasks, dispatch] = useReducer(tasksReducer, undefined, loadInitialTasks)
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
@@ -85,6 +79,7 @@ export default function Board() {
         localStorage.setItem('tasks', JSON.stringify(tasks))
     }, [tasks])
 
+
     /* TASK ACTIONS */
     function moveTask(taskId: Task['id']) {
         dispatch({ type: 'MOVE_TASK', taskId })
@@ -93,6 +88,7 @@ export default function Board() {
     function addTask(data: AddNewTaskSchemaType) {
         const newTask: Task = {
             id: crypto.randomUUID(),
+            projectId: projectId,
             status: 'todo',
             ...data
         }
@@ -105,7 +101,7 @@ export default function Board() {
             return;
         }
 
-        dispatch({ type: 'EDIT_TASK', taskId: selectedTask.id,data })
+        dispatch({ type: 'EDIT_TASK', taskId: selectedTask.id, data })
 
         setSelectedTask(null);
     }
@@ -129,8 +125,9 @@ export default function Board() {
     const allowedPriorities = priorityFilterConversion(priorityFilter)
 
     const visibleTasks = tasks
-        .filter(tasks => allowedPriorities.includes(tasks.priority))
-        .filter(tasks => tasks.title.toLowerCase().includes(search.toLowerCase()))
+    .filter(task => task.projectId === projectId)
+        .filter(task => allowedPriorities.includes(task.priority))
+        .filter(task => task.title.toLowerCase().includes(search.toLowerCase()))
         .sort((a, b) => b.priority - a.priority)
 
     const todoTasks = visibleTasks.filter(task =>

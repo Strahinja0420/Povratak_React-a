@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import type React from 'react';
-import type { Task } from '../../data/tasks';
 import TaskCard from './TaskCard';
+import type { Task } from '../../data/tasks';
 
 
 type ColumnProps = {
@@ -47,7 +47,7 @@ export default function Column({ tasks, title, status, moveTask, onEdit, onDelet
     return (
         <>
             <div
-                
+
             >
                 <h1>{title}</h1>
                 <div
