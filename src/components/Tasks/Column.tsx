@@ -3,21 +3,20 @@ import { useState } from 'react';
 import type React from 'react';
 import TaskCard from './TaskCard';
 import type { Task } from '../../data/tasks';
+import { useTasksActions } from '../../context/TasksContext';
 
 
 type ColumnProps = {
     tasks: Task[];
     status: Task['status'];
     title: string;
-    moveTask: (taskId: Task['id']) => void;
     onEdit: (task: Task) => void;
-    onDeleteTask: (taskId: Task['id']) => void;
-    onDropTask: (taskId: Task['id'], status: Task['status']) => void;
 }
 
 
-export default function Column({ tasks, title, status, moveTask, onEdit, onDeleteTask, onDropTask }: ColumnProps) {
+export default function Column({ tasks, title, status, onEdit }: ColumnProps) {
     const [isDragOver, setIsDragOver] = useState(false);
+    const { moveToStatus } = useTasksActions();
 
     /* DROP LOGIC FOR DRAG AND DROP */
     const handleOnDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -41,7 +40,7 @@ export default function Column({ tasks, title, status, moveTask, onEdit, onDelet
             return
         }
 
-        onDropTask(taskId, status)
+        moveToStatus(taskId, status);
     }
 
     return (
@@ -58,7 +57,7 @@ export default function Column({ tasks, title, status, moveTask, onEdit, onDelet
                     onDrop={handleOnDrop}>
                     {tasks.length === 0 && <p>No tasks</p>}
                     {tasks.map(task => (
-                        <TaskCard key={task.id} task={task} moveTask={moveTask} onEdit={onEdit} onDeleteTask={onDeleteTask} />
+                        <TaskCard onEdit={onEdit} task={task} key={task.id} />
                     ))}
                 </div>
             </div>

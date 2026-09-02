@@ -1,7 +1,7 @@
 import * as z from 'zod';
 
 export const TaskSchema = z.object({
-    id: z.union([z.number(), z.string()]),
+    id: z.string(),
     projectId: z.string(),
     title: z.string(),
     description: z.string(),
@@ -12,35 +12,35 @@ export const TaskSchema = z.object({
 export type Task = z.infer<typeof TaskSchema>
 
 export const tasks: Task[] = [{
-    id: 0,
+    id: '0',
     projectId:'p1',
     title: 'Ucenje react-a',
     description: 'Kreni da ucis jebeni React',
     priority: 10,
     status: 'in-progress'
 }, {
-    id: 1,
+    id: '1',
     projectId:'p1',
     title: 'Pranje vesa',
     description: 'Odnesi ves u komsiluk da se opere',
     priority: 9,
     status: 'todo'
 }, {
-    id: 2,
+    id: '2',
     projectId:'p1',
     title: 'Citanje knjige',
     description: 'Citaj jebenu knjigu za koju si dao pare',
     priority: 6,
     status: 'in-progress'
 }, {
-    id: 3,
+    id: '3',
     projectId:'p1',
     title: 'Ciscenje kuce',
     description: 'Ocisti kucu',
     priority: 7,
     status: 'in-progress'
 }, {
-    id: 4,
+    id: '4',
     projectId:'p1',
     title: 'Dorucak',
     description: 'Skuvaj i pojedi dorucak',

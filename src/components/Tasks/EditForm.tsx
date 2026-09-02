@@ -2,6 +2,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Task } from '../../data/tasks';
+import { useTasksActions } from '../../context/TasksContext';
 
 const EditTaskSchema = z.object({
     title: z.string()
@@ -20,10 +21,10 @@ export type EditTaskSchemaType = z.infer<typeof EditTaskSchema>;
 type EditFormProps = {
     task: Task;
     onClose: () => void;
-    onSubmitEdit: (data: EditTaskSchemaType) => void;
 }
 
-export default function EditForm({ onClose, onSubmitEdit, task }: EditFormProps) {
+export default function EditForm({ onClose, task }: EditFormProps) {
+    const { editTask } = useTasksActions()
 
     const {
         register,
@@ -40,7 +41,8 @@ export default function EditForm({ onClose, onSubmitEdit, task }: EditFormProps)
     })
 
     const onSubmit: SubmitHandler<EditTaskSchemaType> = (data) => {
-        onSubmitEdit(data)
+        editTask(task.id, data)
+        onClose();
     }
 
     return (

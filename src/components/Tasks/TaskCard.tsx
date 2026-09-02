@@ -1,14 +1,14 @@
 import type React from "react";
 import { type Task } from "../../data/tasks"
+import { useTasksActions } from "../../context/TasksContext";
 
 type TaskCardProps = {
     task: Task;
-    moveTask: (taskId: Task['id']) => void;
-    onEdit: (task: Task) => void;
-    onDeleteTask: (taskId: Task['id']) => void;
+    onEdit: (task: Task) => void
 }
 
-export default function TaskCard({ task, moveTask, onEdit, onDeleteTask }: TaskCardProps) {
+export default function TaskCard({ task, onEdit }: TaskCardProps) {
+    const { moveToStatus, removeTask } = useTasksActions()
 
     const handleDragStart = (event: React.DragEvent<HTMLDivElement>, taskId: Task['id']) => {
         event.dataTransfer.setData("text/plain", taskId.toString())
@@ -28,7 +28,14 @@ export default function TaskCard({ task, moveTask, onEdit, onDeleteTask }: TaskC
                 {task.status !== 'done' &&
                     (
                         <div>
-                            <button className="text-black bg-white cursor-pointer" onClick={() => moveTask(task.id)}>Move to next</button>
+                            <button className="text-black bg-white cursor-pointer"
+                                onClick={() =>
+                                    moveToStatus(
+                                        task.id,
+                                        task.status === 'todo' ? 'in-progress' : 'done'
+                                    )
+                                }>
+                                Move to next</button>
 
                         </div>
                     )
@@ -36,7 +43,8 @@ export default function TaskCard({ task, moveTask, onEdit, onDeleteTask }: TaskC
                 <br />
                 <button className="mt-2 text-black bg-white cursor-pointer" onClick={() => onEdit(task)}>Edit</button>
                 <br />
-                <button className="mt-2 text-black bg-white cursor-pointer" onClick={() => onDeleteTask(task.id)}>Delete</button>
+                <button className="mt-2 text-black bg-white cursor-pointer" onClick={() => removeTask(task.id)}>
+                    Delete</button>
 
             </div>
 

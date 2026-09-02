@@ -1,12 +1,12 @@
 import './App.css'
-import Board from './components/Tasks/Board'
-import Projects from './pages/Projects'
+import Navbar from './components/Layout/Navbar'
 
 function App() {
 
   return (
     <>
-      <Projects/>
+      <Navbar></Navbar>
+      <h1>Home</h1>
     </>
   )
 }
