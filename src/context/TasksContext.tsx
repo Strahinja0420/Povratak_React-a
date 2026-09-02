@@ -20,6 +20,22 @@ type TasksDispatch = React.Dispatch<TasksActionType>;
 export const TasksContext = createContext<Task[]>(initialTasks);
 export const TasksReducerContext = createContext<TasksDispatch>({} as TasksDispatch);
 
+function loadInitialTasks(): Task[] {
+    const tasksInStorage = localStorage.getItem('tasks');
+
+    if (!tasksInStorage) {
+        return initialTasks;
+    }
+
+    const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
+
+    if (parsedTasks.success) {
+        return parsedTasks.data
+    }
+
+    return initialTasks;
+}
+
 export default function TasksProvider({ children }: TasksProviderProps) {
     const [tasks, dispatch] = useReducer(tasksReducer, undefined, loadInitialTasks)
 
@@ -111,18 +127,3 @@ function tasksReducer(tasks: Task[], action: TasksActionType): Task[] {
     }
 }
 
-function loadInitialTasks(): Task[] {
-    const tasksInStorage = localStorage.getItem('tasks');
-
-    if (!tasksInStorage) {
-        return initialTasks;
-    }
-
-    const parsedTasks = TaskSchema.array().safeParse(JSON.parse(tasksInStorage));
-
-    if (parsedTasks.success) {
-        return parsedTasks.data
-    }
-
-    return initialTasks;
-}
