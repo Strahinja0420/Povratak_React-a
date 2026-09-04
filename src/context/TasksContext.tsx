@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer } from "react";
 import type { EditTaskSchemaType } from "../components/Tasks/EditForm";
 import { tasks as initialTasks, TaskSchema, type Task } from "../data/tasks"
 import { type Project } from "../data/projects";
+import { type Board as BoardType } from "../data/boards";
 
 type TasksProviderProps = {
     children: React.ReactNode
@@ -13,7 +14,8 @@ type TasksActionType =
     | { type: 'REMOVE_TASK'; taskId: Task['id'] }
     | { type: 'MOVE_TASK'; taskId: Task['id'] }
     | { type: 'MOVE_TO_STATUS'; taskId: Task['id']; status: Task['status'] }
-    | { type: 'DELETE_PROJECT_TASKS'; projectId: Project['id'] };
+    | { type: 'DELETE_PROJECT_TASKS'; projectId: Project['id'] }
+    | { type: 'DELETE_BOARD_TASKS'; boardId: BoardType['id'] };
 
 type TasksDispatch = React.Dispatch<TasksActionType>;
 
@@ -86,6 +88,8 @@ export function useTasksActions() {
             dispatch({ type: 'MOVE_TO_STATUS', taskId, status }),
         deleteProjectTasks: (projectId: Project['id']) =>
             dispatch({ type: 'DELETE_PROJECT_TASKS', projectId }),
+        deleteBoardTasks: (boardId: BoardType['id']) =>
+            dispatch({ type: 'DELETE_BOARD_TASKS', boardId })
     };
 }
 
@@ -120,6 +124,9 @@ function tasksReducer(tasks: Task[], action: TasksActionType): Task[] {
         }
         case 'DELETE_PROJECT_TASKS': {
             return tasks.filter(task => task.projectId !== action.projectId)
+        }
+        case 'DELETE_BOARD_TASKS': {
+            return tasks.filter(task => task.boardId !== action.boardId)
         }
 
         default:

@@ -1,24 +1,26 @@
-import { Link, useOutletContext } from "react-router";
-import { useTasks, useTasksActions } from "../../context/TasksContext";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router";
+import { useTasks } from "../../context/TasksContext";
 import type { Project } from "../../data/projects";
-import type { ProjectsContext } from "../../pages/ProjectsLayout";
+import type { Board } from "../../data/boards";
+import type { ProjectDetailsContext } from "../Projects/ProjectDetails";
 
-type ProjectCardProps = {
-    project: Project;
-    setSelectedProject: (project: Project) => void;
+type BoardCardProps = {
+    board: Board;
 }
 
-export default function ProjectCard({ project, setSelectedProject }: ProjectCardProps) {
+export default function BoardCard({ board }: BoardCardProps) {
     const tasks = useTasks()
-    const { deleteProject } = useOutletContext<ProjectsContext>()
-    const { deleteProjectTasks } = useTasksActions();
+    const { projectId } = useParams();
+    const { deleteBoard } = useOutletContext<ProjectDetailsContext>();
+    const navigate = useNavigate();
 
-    function showNumberOfTasks(project: Project) {
-        const projectTasks = tasks.filter(task => task.projectId === project.id);
+    function showNumberOfTasks(projectId: Project['id']) {
+        const projectTasks = tasks.
+            filter(task => task.projectId === projectId)
+            .filter(task => task.boardId === board.id)
         const numOfTasks = projectTasks.length;
         const numOfTasksDone = projectTasks.filter(task => task.status === 'done').length;
         const numOfTasksDonePercentage = numOfTasks > 0 ? Math.round((numOfTasksDone / numOfTasks) * 100) : 0;
-
         return (
             <div className="flex flex-col gap-1.5 my-3 text-sm">
                 <div className="flex justify-between text-xs text-gray-400">
@@ -42,36 +44,38 @@ export default function ProjectCard({ project, setSelectedProject }: ProjectCard
         <>
             <div
                 className="relative flex flex-col justify-between p-5 text-left transition-all duration-200 border border-gray-700 shadow-md hover:border-purple-500/60 bg-gray-900/40 rounded-xl"
-                key={project.id}
+                key={board.id}
             >
-                <Link className="absolute inset-0 z-0 rounded-xl" to={`/projects/${project.id}/overview`}>
-                    <span className="sr-only">{project.name}</span>
+                <Link className="absolute inset-0 z-0 rounded-xl" to={`/projects/${projectId}/boards/${board.id}`}>
+                    <span className="sr-only">{board.name}</span>
                 </Link>
 
                 <div className="relative z-0 pointer-events-none">
                     <h3 className="mb-1 text-lg font-semibold text-white truncate">
-                        {project.name}
+                        {board.name}
                     </h3>
-                    {showNumberOfTasks(project)}
+                    {showNumberOfTasks(projectId!)}
                 </div>
+
 
                 <div className="relative z-10 flex justify-end gap-2 pt-3 border-t border-gray-800">
                     <button
                         className="px-3 py-1 text-xs font-medium text-black transition-colors bg-white rounded-md cursor-pointer hover:bg-gray-200"
-                        onClick={() => setSelectedProject(project)}
+
                     >
                         Edit
                     </button>
                     <button
                         className="px-3 py-1 text-xs font-medium text-white transition-colors bg-red-600 rounded-md cursor-pointer hover:bg-red-700"
                         onClick={() => {
-                            deleteProject(project.id)
-                            deleteProjectTasks(project.id)
+                            deleteBoard(board.id)
+                            navigate(`/projects/${projectId}/overview`)
                         }}
                     >
                         Delete
                     </button>
                 </div>
+
             </div>
         </>
     )

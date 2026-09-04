@@ -6,8 +6,8 @@ import EditProjectForm from "./EditProjectForm";
 import ProjectCard from "./ProjectCard";
 import ProjectInputForm from "./ProjectInputForm";
 
-export default function Projects() {
-    const { editProject, filteredProjects, setSearch, search } = useOutletContext<ProjectsContext>();
+export default function ProjectsOverview() {
+    const { editProject, filteredProjects, handleSearchChange, search } = useOutletContext<ProjectsContext>();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
     return (
@@ -21,8 +21,8 @@ export default function Projects() {
                     className="w-full px-4 py-2 text-center rounded-lg border border-gray-700 bg-gray-900/60 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
                     placeholder="Search projects..."
                     type="text"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+                    value={search || ''}
+                    onChange={(event) => handleSearchChange(event.target.value)}
                 />
             </div>
 
@@ -33,7 +33,7 @@ export default function Projects() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {filteredProjects.map(project =>
-                        <ProjectCard project={project} setSelectedProject={() => setSelectedProject(project)}></ProjectCard>
+                        <ProjectCard key={project.id} project={project} setSelectedProject={() => setSelectedProject(project)}></ProjectCard>
                     )}
                 </div>
             )}
